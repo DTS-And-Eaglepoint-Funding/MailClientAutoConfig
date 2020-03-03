@@ -1,4 +1,8 @@
 <?php
+/** @var $localpart string */
+/** @var $cfg DomainConfiguration */
+/** @var $config Configuration */
+
 // This configuration file is really just a plain PHP source file.
 // If needed, custom logic can be created.
 //
