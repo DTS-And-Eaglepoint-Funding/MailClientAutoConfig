@@ -56,6 +56,8 @@ class Server {
     public $username;
     public $endpoints;
     public $samePassword;
+    public $defaultPort;
+    public $defaultSslPort;
 
     public function __construct($type, $hostname, $defaultPort, $defaultSslPort) {
         $this->type = $type;
@@ -114,7 +116,7 @@ class AliasesFileUsernameResolver implements UsernameResolver {
         $fp = fopen($this->fileName, 'rb');
 
         if($fp === false) {
-            throw new Exception("Unable to open aliases file \"$this->$fileName\"");
+            throw new Exception("Unable to open aliases file \"$this->fileName\"");
         }
 
         $username = $this->findLocalPart($fp, $request->localpart);
@@ -133,6 +135,7 @@ class AliasesFileUsernameResolver implements UsernameResolver {
             if(!preg_match("/^\s*" . preg_quote($localPart) . "\s*:\s*(\S+)\s*$/", $line, $matches)) continue;
             return $matches[1];
         }
+        throw new Exception("Unable to parse \$localPart");
     }
 }
 
@@ -170,8 +173,12 @@ abstract class RequestHandler {
 
         $cachedConfig = $this->readConfig($request);
         $cachedEmail = $request->email;
-
-        return $cachedConfig->getDomainConfig($request->domain);
+        try {
+            return $cachedConfig->getDomainConfig($request->domain);
+        }
+        catch(Exception $exception){
+            return $exception;
+        }
     }
 
     protected function readConfig($vars) {
@@ -193,6 +200,7 @@ abstract class RequestHandler {
             $resolver = $server->username;
             return $resolver->findUsername($request);
         }
+        return '';
     }
 }
 
@@ -210,7 +218,7 @@ class MozillaHandler extends RequestHandler {
         return (object)array('email' => $_GET['emailaddress']);
     }
 
-    protected function writeXml($writer, $config, $request) {
+    protected function writeXml(XMLWriter $writer, DomainConfiguration $config, $request) {
         $writer->startDocument("1.0");
         $writer->setIndent(4);
         $writer->startElement("clientConfig");
@@ -222,7 +230,7 @@ class MozillaHandler extends RequestHandler {
         $writer->endDocument();
     }
 
-    protected function writeEmailProvider($writer, $config, $request) {
+    protected function writeEmailProvider(XMLWriter $writer, DomainConfiguration $config, $request) {
         $writer->startElement("emailProvider");
         $writer->writeAttribute("id", $config->id);
 
@@ -242,7 +250,7 @@ class MozillaHandler extends RequestHandler {
         $writer->endElement();
     }
 
-    protected function writeServer($writer, $server, $endpoint, $request) {
+    protected function writeServer(XMLWriter $writer, $server, $endpoint, $request) {
         switch($server->type) {
             case 'imap':
             case 'pop3':
@@ -254,7 +262,7 @@ class MozillaHandler extends RequestHandler {
         }
     }
 
-    protected function writeIncomingServer($writer, $server, $endpoint, $request) {
+    protected function writeIncomingServer(XMLWriter $writer, $server, $endpoint, $request) {
         $authentication = $this->mapAuthenticationType($endpoint->authentication);
         if(empty($authentication)) return;
 
@@ -268,7 +276,7 @@ class MozillaHandler extends RequestHandler {
         $writer->endElement();
     }
 
-    protected function writeSmtpServer($writer, $server, $endpoint, $request) {
+    protected function writeSmtpServer(XMLWriter $writer, $server, $endpoint, $request) {
         $authentication = $this->mapAuthenticationType($endpoint->authentication);
         if($authentication === NULL) return;
 
@@ -320,13 +328,14 @@ class OutlookHandler extends RequestHandler {
 
         if(strlen($postdata) > 0) {
             $xml = simplexml_load_string($postdata);
+            /** @noinspection PhpUndefinedFieldInspection */
             return (object)array('email' => $xml->Request->EMailAddress);
         }
 
         return NULL;
     }
 
-    public function writeXml($writer, $config, $request) {
+    public function writeXml(XMLWriter $writer, DomainConfiguration $config, $request) {
         $writer->startDocument("1.0", "utf-8");
         $writer->setIndent(4);
         $writer->startElement("Autodiscover");
@@ -352,7 +361,7 @@ class OutlookHandler extends RequestHandler {
         $writer->endDocument();
     }
 
-    protected function writeProtocol($writer, $server, $endpoint, $request) {
+    protected function writeProtocol(XMLWriter $writer, $server, $endpoint, $request) {
         switch($endpoint->authentication) {
             case 'password-cleartext':
             case 'SPA':
