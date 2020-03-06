@@ -14,12 +14,16 @@ else if (strpos($_SERVER['SERVER_NAME'], "autodiscover.") === 0) {
 $exception_handler = new ExceptionHandling();
 
 if ($handler) {
+    $response = '';
     try {
-        $handler->get_response();
+        $response = $handler->get_response();
     }
     catch (Exception $exception) {
         $exception_handler->set_status(500)->set_exception($exception->getMessage());
-        echo $exception_handler->get_response();
+        $response = $exception_handler->get_response();
+    }
+    finally {
+        echo $response;
         return;
     }
 }
