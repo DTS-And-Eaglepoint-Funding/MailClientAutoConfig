@@ -1,5 +1,6 @@
 <?php
 /** @var $localpart string */
+/** @var $mail string */
 /** @var $cfg DomainConfiguration */
 /** @var $config Configuration */
 
@@ -16,11 +17,10 @@
 $cfg = $config->add('example.com');
 
 // Name and short name for the offered service, as used by Mozilla Thunderbird
-$cfg->name = 'Example mail services';
-$cfg->nameShort = 'Example';
+$cfg->set_name('Example mail services', 'Example');
 
 // Domains for which these settings apply, in lowercase.
-$cfg->domains = [ 'example.com', 'example.net', 'example.org' ];
+$cfg->set_domains(['example.com', 'example.net', 'example.org']);
 
 // This is the username associated with the email address. If some kind of lookup
 // needs to occur to map the email address to a username, this can be done by
@@ -29,9 +29,10 @@ $cfg->domains = [ 'example.com', 'example.net', 'example.org' ];
 //
 // Some examples:
 //   "$localpart";                                          Use the localpart of the email address as username
+//   "$mail";                                               Use the provided Emailaddress as username
 //   new AliasesFileUsernameResolver();                     Scan /etc/mail/aliases to obtain the username
 //   new AliasesFileUsernameResolver("/etc/mail/$domain");  Same but with separate file per domain
-$cfg->username = "$localpart";
+$cfg->set_username("$localpart");
 
 // Add available servers here.
 // addServer($type, $hostname)
@@ -49,17 +50,16 @@ $cfg->username = "$localpart";
 //                   none                   Only valid for SMTP. Not recommended however.
 
 // Example IMAP server for incoming mail, running on port 143 (TLS) and 993 (SSL)
-$cfg->addServer('imap', 'imap.example.com')
-    ->withEndpoint('STARTTLS')
-    ->withEndpoint('SSL');
-    
+$cfg->add_server('imap', 'imap.example.com')
+    ->with_endpoint('STARTTLS')
+    ->with_endpoint('SSL');
+
 // Example POP3 server for incoming mail, running on port 110 (TLS) and 995 (SSL)    
-$cfg->addServer('pop3', 'pop.example.com')
-    ->withEndpoint('STARTTLS')
-    ->withEndpoint('SSL');    
+$cfg->add_server('pop3', 'pop.example.com')
+    ->with_endpoint('STARTTLS')
+    ->with_endpoint('SSL');
 
 // Example SMTP server for outgoing mail, running on port 587 (TLS) and 465 (SSL)
-$cfg->addServer('smtp', 'smtp.example.com')
-    ->withEndpoint('STARTTLS', 587)
-    ->withEndpoint('SSL');
-   
+$cfg->add_server('smtp', 'smtp.example.com')
+    ->with_endpoint('STARTTLS', 587)
+    ->with_endpoint('SSL');

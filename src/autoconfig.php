@@ -1,54 +1,143 @@
 <?php
+include './const.php';
 const CONFIG_FILE = './autoconfig.settings.php';
-
-class ConnectionType {
-    const IMAP = 'imap';
-    const SMTP = 'smtp';
-    const POP3 = 'pop3';
-}
-
-class SocketType {
-    const SSL = 'SSL';
-    const STARTTLS = 'STARTTLS';
-}
 
 class Configuration {
     private $items = array();
 
+    /**
+     * Setup new Configuration for Autoconfig
+     * @param $id
+     * @return DomainConfiguration
+     */
     public function add($id) {
         $result = new DomainConfiguration();
-        $result->id = $id;
+        $result->set_id($id);
         array_push($this->items, $result);
         return $result;
     }
 
-    public function getDomainConfig($domain) {
-        foreach ($this->items as $domainConfig) {
-            if (in_array($domain, $domainConfig->domains)) {
-                return $domainConfig;
+    /**
+     * @param string $domain
+     * @return DomainConfiguration
+     * @throws Exception
+     */
+    public function get_domain_config(string $domain) {
+        foreach ($this->items as $domain_config) {
+            if (in_array($domain, $domain_config->domains)) {
+                return $domain_config;
             }
         }
 
-        throw new Exception("No configuration found for requested domain '$domain'.");
+        throw new Exception(sprintf(Exceptions::DOMAIN_NOT_CONFIGURED, $domain));
     }
 }
 
 class DomainConfiguration {
-    public $domains;
-    public $servers = array();
-    public $username;
-    public $name;
-    public $nameShort;
-    public $id;
+    private $domains;
+    private $servers = array();
+    private $username;
+    private $name;
+    private $name_short;
+    private $id;
 
-    public function addServer($type, $hostname) {
-        $server = $this->createServer($type, $hostname);
+    /**
+     * Add new Server for Config-ID
+     * @param string $type
+     * @param string $hostname
+     * @return Server
+     * @throws Exception
+     */
+    public function add_server(string $type, string $hostname) {
+        $server = $this->create_server($type, $hostname);
         $server->username = $this->username;
         array_push($this->servers, $server);
         return $server;
     }
 
-    private function createServer(string $type, string $hostname) {
+    /**
+     * Set Name for Config
+     * @param string $name
+     * @param string|null $name_short
+     */
+    public function set_name(string $name, string $name_short = NULL) {
+        $this->name = $name;
+        if (!is_null($name_short)) {
+            $this->name_short = $name_short;
+        }
+    }
+
+    /**
+     * Get Name for Config
+     * @return string
+     */
+    public function get_name(): string {
+        return $this->name;
+    }
+
+    /**
+     * Get Shortname for Config
+     * @return string
+     */
+    public function get_shortname(): string {
+        return $this->name_short;
+    }
+
+    /**
+     * Set ID for Config
+     * @param string $id
+     */
+    public function set_id(string $id) {
+        $this->id = $id;
+    }
+
+    /**
+     * Get Config-ID
+     * @return mixed
+     */
+    public function get_id() {
+        return $this->id;
+    }
+
+    /**
+     * Set all used Domains for Config
+     * @param array $domains
+     */
+    public function set_domains(array $domains) {
+        $this->domains = $domains;
+    }
+
+    /**
+     * Get list of all Domains for Config
+     * @return array
+     */
+    public function get_domains() {
+        return $this->domains;
+    }
+
+    /**
+     * Set Username to use for Config
+     * @param string $username
+     */
+    public function set_username(string $username) {
+        $this->username = $username;
+    }
+
+    /**
+     * Get all Servers for Config
+     * @return array
+     */
+    public function get_servers() {
+        return $this->servers;
+    }
+
+    /**
+     * @param string $type
+     * @param string $hostname
+     * @return Server
+     * @throws Exception
+     */
+    private function create_server(string $type, string $hostname) {
         switch ($type) {
             case ConnectionType::IMAP:
                 return new Server($type, $hostname, 143, 993);
@@ -57,7 +146,7 @@ class DomainConfiguration {
             case ConnectionType::SMTP:
                 return new Server($type, $hostname, 25, 465);
             default:
-                throw new Exception("Unrecognized server type \"$type\"");
+                throw new Exception(sprintf(Exceptions::UNKNOWN_SOCKET_TYPE, $type));
         }
     }
 }
@@ -67,38 +156,61 @@ class Server {
     public $hostname;
     public $username;
     public $endpoints;
-    public $samePassword;
-    public $defaultPort;
-    public $defaultSslPort;
+    public $same_password;
+    public $default_port;
+    public $default_ssl_port;
 
-    public function __construct(string $type, string $hostname, int $defaultPort, int $defaultSslPort) {
+    /**
+     * Server constructor.
+     * @param string $type
+     * @param string $hostname
+     * @param int $default_port
+     * @param int $default_ssl_port
+     */
+    public function __construct(string $type, string $hostname, int $default_port, int $default_ssl_port) {
         $this->type = $type;
         $this->hostname = $hostname;
-        $this->defaultPort = $defaultPort;
-        $this->defaultSslPort = $defaultSslPort;
+        $this->default_port = $default_port;
+        $this->default_ssl_port = $default_ssl_port;
         $this->endpoints = array();
-        $this->samePassword = true;
+        $this->same_password = true;
     }
 
-    public function withUsername(string $username) {
+    /**
+     * Set specific Username for this Server
+     * @param string $username
+     * @return $this
+     */
+    public function with_username(string $username) {
         $this->username = $username;
         return $this;
     }
 
-    public function withDifferentPassword() {
-        $this->samePassword = false;
+    /**
+     * Call to hint that not the same password is needed for this Server
+     * @return $this
+     */
+    public function with_different_password() {
+        $this->same_password = false;
         return $this;
     }
 
-    public function withEndpoint(string $socketType, $port = NULL, $authentication = 'password-cleartext') {
+    /**
+     * Set Endpoint for Server, can be called multiple times to set different endpoints
+     * @param string $socket_type
+     * @param int $port
+     * @param string $authentication
+     * @return $this
+     */
+    public function with_endpoint(string $socket_type, $port = NULL, $authentication = 'password-cleartext') {
         if ($port === NULL) {
-            $port = $socketType === SocketType::SSL ? $this->defaultSslPort : $this->defaultPort;
+            $port = $socket_type === SocketType::SSL ? $this->default_ssl_port : $this->default_port;
         }
 
         array_push(
             $this->endpoints,
             (object)array(
-                'socketType' => $socketType,
+                'socketType' => $socket_type,
                 'port' => $port,
                 'authentication' => $authentication
             )
@@ -109,65 +221,114 @@ class Server {
 }
 
 interface UsernameResolver {
-    public function findUsername(stdClass $request);
+    /**
+     * @param stdClass $request
+     * @return string|null
+     */
+    public function find_username(stdClass $request);
 }
 
 class AliasesFileUsernameResolver implements UsernameResolver {
-    private $fileName;
+    private $file_name;
 
+    /**
+     * AliasesFileUsernameResolver constructor.
+     * @param string $fileName
+     */
     function __construct(string $fileName = "/etc/mail/aliases") {
-        $this->fileName = $fileName;
+        $this->file_name = $fileName;
     }
 
-    public function findUsername(stdClass $request) {
-        static $cachedEmail = NULL;
-        static $cachedUsername = NULL;
+    /**
+     * @param stdClass $request
+     * @return string|null
+     * @throws Exception
+     */
+    public function find_username(stdClass $request) {
+        static $cached_email = NULL;
+        static $cached_username = NULL;
 
-        if ($request->email === $cachedEmail) {
-            return $cachedUsername;
+        if ($request->email === $cached_email) {
+            return $cached_username;
         }
 
-        $fp = fopen($this->fileName, 'rb');
+        $fp = fopen($this->file_name, 'rb');
 
         if ($fp === false) {
-            throw new Exception("Unable to open aliases file \"$this->fileName\"");
+            throw new Exception(sprintf(Exceptions::ALIAS_NOT_OPENABLE, $this->file_name));
         }
 
-        $username = $this->findLocalPart($fp, $request->localpart);
+        $username = $this->find_localpart($fp, $request->localpart);
         if (strpos($username, "@") !== false || strpos($username, ",") !== false) {
             $username = NULL;
         }
 
-        $cachedEmail = $request->email;
-        $cachedUsername = $username;
+        $cached_email = $request->email;
+        $cached_username = $username;
         return $username;
     }
 
-    protected function findLocalPart($fp, string $localPart) {
+    /**
+     * @param resource $fp
+     * @param string $localpart
+     * @return string
+     * @throws Exception
+     */
+    protected function find_localpart($fp, string $localpart) {
         while (($line = fgets($fp)) !== false) {
             $matches = array();
-            if (!preg_match("/^\s*" . preg_quote($localPart) . "\s*:\s*(\S+)\s*$/", $line, $matches)) continue;
+            if (!preg_match("/^\s*" . preg_quote($localpart) . "\s*:\s*(\S+)\s*$/", $line, $matches)) continue;
             return $matches[1];
         }
-        throw new Exception("Unable to parse \$localPart");
+        throw new Exception(Exceptions::LOCALPART_NOT_PARSEABLE);
     }
 }
 
 abstract class RequestHandler {
-    public function handleRequest() {
-        $request = $this->parseRequest();
-        $this->expandRequest($request);
-        $config = $this->getDomainConfig($request);
-        $this->writeResponse($config, $request);
+    /**
+     * @return object
+     * @throws Exception
+     */
+    protected abstract function parse_request();
+
+    /**
+     * @param string $authentication
+     * @return string|null|false
+     */
+    protected abstract function map_authentication_type(string $authentication);
+
+    /**
+     * Returns complete XML structure for the Request
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_response(): string {
+        $request = $this->parse_request();
+        $this->expand_request($request);
+        $config = $this->get_domain_config($request);
+        return $this->write_response($config, $request);
     }
 
-    protected abstract function parseRequest();
+    /**
+     * @param DomainConfiguration $config
+     * @param stdClass $request
+     * @return string
+     */
+    protected function write_response(DomainConfiguration $config, stdClass $request) {
+        header("Content-Type: application/xml");
 
-    protected abstract function mapAuthenticationType(string $authentication);
+        $writer = new XMLWriter();
+        $writer->openMemory();
 
-    public  abstract function writeResponse(DomainConfiguration $config, stdClass $request);
+        $this->write_xml($writer, $config, $request);
 
-    protected function expandRequest(stdClass $request) {
+        return $writer->outputMemory(true);
+    }
+
+    /**
+     * @param stdClass $request
+     */
+    protected function expand_request(stdClass $request) {
         list($localpart, $domain) = explode('@', $request->email);
 
         if (!isset($request->localpart)) {
@@ -179,24 +340,29 @@ abstract class RequestHandler {
         }
     }
 
-    protected function getDomainConfig(stdClass $request) {
+    /**
+     * @param stdClass $request
+     * @return DomainConfiguration|null
+     * @throws Exception
+     */
+    protected function get_domain_config(stdClass $request) {
         static $cachedEmail = NULL;
-        static $cachedConfig = NULL;
+        static $cached_config = NULL;
 
         if ($cachedEmail === $request->email) {
-            return $cachedConfig;
+            return $cached_config;
         }
 
-        $cachedConfig = $this->readConfig($request);
+        $cached_config = $this->read_config($request);
         $cachedEmail = $request->email;
-        try {
-            return $cachedConfig->getDomainConfig($request->domain);
-        } catch (Exception $exception) {
-            return $exception;
-        }
+        return $cached_config->get_domain_config($request->domain);
     }
 
-    protected function readConfig(stdClass $vars) {
+    /**
+     * @param stdClass $vars
+     * @return Configuration
+     */
+    protected function read_config(stdClass $vars) {
         foreach ($vars as $var => $value) {
             $$var = $value;
         }
@@ -207,79 +373,105 @@ abstract class RequestHandler {
         return $config;
     }
 
-    protected function getUsername(Server $server, stdClass $request) {
+    /**
+     * @param Server $server
+     * @param stdClass $request
+     * @return string
+     */
+    protected function get_username(Server $server, stdClass $request) {
         if (is_string($server->username)) {
             return $server->username;
         }
 
         if ($server->username instanceof UsernameResolver) {
             $resolver = $server->username;
-            return $resolver->findUsername($request);
+            return $resolver->find_username($request);
         }
         return '';
     }
 }
 
 class MozillaHandler extends RequestHandler {
-    public function writeResponse($config, $request) {
-        header("Content-Type: text/xml");
-        $writer = new XMLWriter();
-        $writer->openURI("php://output");
-
-        $this->writeXml($writer, $config, $request);
-        $writer->flush();
+    /**
+     * @return object
+     * @throws Exception
+     */
+    protected function parse_request() {
+        $emailaddress = $_GET['emailaddress'] || null;
+        if (is_null($emailaddress)) {
+            throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
+        }
+        return (object)array('email' => $emailaddress);
     }
 
-    protected function parseRequest() {
-        return (object)array('email' => $_GET['emailaddress']);
-    }
-
-    protected function writeXml(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
+    /**
+     * @param XMLWriter $writer
+     * @param DomainConfiguration $config
+     * @param stdClass $request
+     */
+    protected function write_xml(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
         $writer->startDocument("1.0");
         $writer->setIndent(4);
         $writer->startElement("clientConfig");
         $writer->writeAttribute("version", "1.1");
 
-        $this->writeEmailProvider($writer, $config, $request);
+        $this->write_email_provider($writer, $config, $request);
 
         $writer->endElement();
         $writer->endDocument();
     }
 
-    protected function writeEmailProvider(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
+    /**
+     * @param XMLWriter $writer
+     * @param DomainConfiguration $config
+     * @param stdClass $request
+     */
+    protected function write_email_provider(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
         $writer->startElement("emailProvider");
-        $writer->writeAttribute("id", $config->id);
+        $writer->writeAttribute("id", $config->get_id());
 
-        foreach ($config->domains as $domain) {
+        foreach ($config->get_domains() as $domain) {
             $writer->writeElement("domain", $domain);
         }
 
-        $writer->writeElement("displayName", $config->name);
-        $writer->writeElement("displayShortName", $config->nameShort);
+        $writer->writeElement("displayName", $config->get_name());
+        $writer->writeElement("displayShortName", $config->get_shortname());
 
-        foreach ($config->servers as $server) {
+        foreach ($config->get_servers() as $server) {
             foreach ($server->endpoints as $endpoint) {
-                $this->writeServer($writer, $server, $endpoint, $request);
+                $this->write_server($writer, $server, $endpoint, $request);
             }
         }
 
         $writer->endElement();
     }
 
-    protected function writeServer(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
+    /**
+     * @param XMLWriter $writer
+     * @param Server $server
+     * @param stdClass $endpoint
+     * @param stdClass $request
+     */
+    protected function write_server(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
         switch ($server->type) {
             case 'imap':
             case 'pop3':
-                $this->writeIncomingServer($writer, $server, $endpoint, $request);
+                $this->write_incoming_server($writer, $server, $endpoint, $request);
                 break;
             case 'smtp':
-                $this->writeSmtpServer($writer, $server, $endpoint, $request);
+                $this->write_smtp_server($writer, $server, $endpoint, $request);
                 break;
         }
     }
 
-    protected function writeIncomingServer(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
-        $authentication = $this->mapAuthenticationType($endpoint->authentication);
+    /**
+     * @param XMLWriter $writer
+     * @param Server $server
+     * @param stdClass $endpoint
+     * @param stdClass $request
+     */
+    protected function write_incoming_server(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
+        $authentication = $this->map_authentication_type($endpoint->authentication);
         if (empty($authentication)) return;
 
         $writer->startElement("incomingServer");
@@ -287,13 +479,19 @@ class MozillaHandler extends RequestHandler {
         $writer->writeElement("hostname", $server->hostname);
         $writer->writeElement("port", $endpoint->port);
         $writer->writeElement("socketType", $endpoint->socketType);
-        $writer->writeElement("username", $this->getUsername($server, $request));
+        $writer->writeElement("username", $this->get_username($server, $request));
         $writer->writeElement("authentication", $authentication);
         $writer->endElement();
     }
 
-    protected function writeSmtpServer(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
-        $authentication = $this->mapAuthenticationType($endpoint->authentication);
+    /**
+     * @param XMLWriter $writer
+     * @param Server $server
+     * @param stdClass $endpoint
+     * @param stdClass $request
+     */
+    protected function write_smtp_server(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
+        $authentication = $this->map_authentication_type($endpoint->authentication);
         if ($authentication === NULL) return;
 
         $writer->startElement("outgoingServer");
@@ -303,7 +501,7 @@ class MozillaHandler extends RequestHandler {
         $writer->writeElement("socketType", $endpoint->socketType);
 
         if ($authentication !== false) {
-            $writer->writeElement("username", $this->getUsername($server, $request));
+            $writer->writeElement("username", $this->get_username($server, $request));
             $writer->writeElement("authentication", $authentication);
         }
 
@@ -312,14 +510,18 @@ class MozillaHandler extends RequestHandler {
         $writer->endElement();
     }
 
-    protected function mapAuthenticationType(string $authentication) {
+    /**
+     * @param string $authentication
+     * @return false|string|null
+     */
+    protected function map_authentication_type(string $authentication) {
         switch ($authentication) {
             case 'password-cleartext':
                 return 'password-cleartext';
             case 'CRAM-MD5':
                 return 'password-encrypted';
             case 'none':
-                return false;
+                return '';
             default:
                 return NULL;
         }
@@ -327,31 +529,33 @@ class MozillaHandler extends RequestHandler {
 }
 
 class OutlookHandler extends RequestHandler {
-    public function writeResponse($config, $request) {
-        header("Content-Type: application/xml");
 
-        $writer = new XMLWriter();
-        $writer->openMemory();
-
-        $this->writeXml($writer, $config, $request);
-
-        $response = $writer->outputMemory(true);
-        echo $response;
-    }
-
-    protected function parseRequest() {
+    /**
+     * @return object
+     * @throws Exception
+     */
+    protected function parse_request(): object {
         $postdata = file_get_contents("php://input");
 
         if (strlen($postdata) > 0) {
             $xml = simplexml_load_string($postdata);
             /** @noinspection PhpUndefinedFieldInspection */
-            return (object)array('email' => $xml->Request->EMailAddress);
+            $emailaddress = $xml->Request->EMailAddress;
+            if (is_null($emailaddress)) {
+                throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
+            }
+            return (object)array('email' => $emailaddress);
         }
 
-        return NULL;
+        throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
     }
 
-    public function writeXml(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
+    /**
+     * @param XMLWriter $writer
+     * @param DomainConfiguration $config
+     * @param stdClass $request
+     */
+    public function write_xml(XMLWriter $writer, DomainConfiguration $config, stdClass $request) {
         $writer->startDocument("1.0", "utf-8");
         $writer->setIndent(4);
         $writer->startElement("Autodiscover");
@@ -363,9 +567,9 @@ class OutlookHandler extends RequestHandler {
         $writer->writeElement("AccountType", "email");
         $writer->writeElement("Action", "settings");
 
-        foreach ($config->servers as $server) {
+        foreach ($config->get_servers() as $server) {
             foreach ($server->endpoints as $endpoint) {
-                if ($this->writeProtocol($writer, $server, $endpoint, $request))
+                if ($this->write_protocol($writer, $server, $endpoint, $request))
                     break;
             }
         }
@@ -377,7 +581,14 @@ class OutlookHandler extends RequestHandler {
         $writer->endDocument();
     }
 
-    protected function writeProtocol(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
+    /**
+     * @param XMLWriter $writer
+     * @param Server $server
+     * @param stdClass $endpoint
+     * @param stdClass $request
+     * @return bool
+     */
+    protected function write_protocol(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request) {
         switch ($endpoint->authentication) {
             case 'password-cleartext':
             case 'SPA':
@@ -393,11 +604,11 @@ class OutlookHandler extends RequestHandler {
         $writer->writeElement('Type', strtoupper($server->type));
         $writer->writeElement('Server', $server->hostname);
         $writer->writeElement('Port', $endpoint->port);
-        $writer->writeElement('LoginName', $this->getUsername($server, $request));
+        $writer->writeElement('LoginName', $this->get_username($server, $request));
         $writer->writeElement('DomainRequired', 'off');
         $writer->writeElement('SPA', $endpoint->authentication === 'SPA' ? 'on' : 'off');
 
-        switch ($endpoint->socketType) {
+        switch ($endpoint->socket_type) {
             case 'plain':
                 $writer->writeElement("SSL", "off");
                 break;
@@ -414,7 +625,7 @@ class OutlookHandler extends RequestHandler {
         $writer->writeElement("AuthRequired", $endpoint->authentication !== 'none' ? 'on' : 'off');
 
         if ($server->type == 'smtp') {
-            $writer->writeElement('UsePOPAuth', $server->samePassword ? 'on' : 'off');
+            $writer->writeElement('UsePOPAuth', $server->same_password ? 'on' : 'off');
             $writer->writeElement('SMTPLast', 'off');
         }
 
@@ -423,7 +634,11 @@ class OutlookHandler extends RequestHandler {
         return true;
     }
 
-    protected function mapAuthenticationType(string $authentication) {
+    /**
+     * @param string $authentication
+     * @return bool|false|string|null
+     */
+    protected function map_authentication_type(string $authentication) {
         switch ($authentication) {
             case 'password-cleartext':
                 return 'password-cleartext';
@@ -435,22 +650,4 @@ class OutlookHandler extends RequestHandler {
                 return NULL;
         }
     }
-}
-
-if (strpos($_SERVER['SERVER_NAME'], "autoconfig.") === 0) {
-    // Configuration for Mozilla Thunderbird, Evolution, KMail, Kontact
-    $handler = new MozillaHandler();
-}
-else if (strpos($_SERVER['SERVER_NAME'], "autodiscover.") === 0) {
-    // Configuration for Outlook
-    $handler = new OutlookHandler();
-}
-else {
-    header("HTTP/1.0 404 Not Found");
-}
-try {
-    $handler->handleRequest();
-}
-catch (Exception $exception) {
-    header("HTTP/1.0 500 	$exception");
 }
