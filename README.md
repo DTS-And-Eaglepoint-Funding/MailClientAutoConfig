@@ -81,7 +81,7 @@ In this example, we'll be setting things up for the example.com mail server, run
    ```
 5. Repeat the same configuration for `listen 443 ssl` and add your SSL configuration (`ssl_certificate`, `ssl_certificate_key`, etc.) Alternatively, if you use [Let's Encrypt](https://letsencrypt.org/) for your free SSL certificate, you can let the command line tool take care of this for you afterwards.
 6. Edit the autoconfig.settings.php file using your favorite text editor. See below for configuration details.
-7. Restart Apache
+7. Restart Nginx
 
 ## Configuration
 
