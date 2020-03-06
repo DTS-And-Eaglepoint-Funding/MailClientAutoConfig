@@ -397,7 +397,7 @@ class MozillaHandler extends RequestHandler {
      * @throws Exception
      */
     protected function parse_request() {
-        $emailaddress = $_GET['emailaddress'] || null;
+        $emailaddress = array_key_exists('emailaddress', $_GET) ? $_GET['emailaddress'] : null;
         if (is_null($emailaddress)) {
             throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
         }
