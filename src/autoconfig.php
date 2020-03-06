@@ -24,7 +24,8 @@ class Configuration {
      */
     public function get_domain_config(string $domain) {
         foreach ($this->items as $domain_config) {
-            if (in_array($domain, $domain_config->domains)) {
+            /** @var $domain_config DomainConfiguration */
+            if (in_array($domain, $domain_config->get_domains())) {
                 return $domain_config;
             }
         }
