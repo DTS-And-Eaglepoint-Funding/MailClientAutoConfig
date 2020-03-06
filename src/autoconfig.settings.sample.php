@@ -1,6 +1,6 @@
 <?php
 /** @var $localpart string */
-/** @var $mail string */
+/** @var $email string */
 /** @var $cfg DomainConfiguration */
 /** @var $config Configuration */
 
@@ -29,7 +29,7 @@ $cfg->set_domains(['example.com', 'example.net', 'example.org']);
 //
 // Some examples:
 //   "$localpart";                                          Use the localpart of the email address as username
-//   "$mail";                                               Use the provided Emailaddress as username
+//   "$email";                                              Use the provided Emailaddress as username
 //   new AliasesFileUsernameResolver();                     Scan /etc/mail/aliases to obtain the username
 //   new AliasesFileUsernameResolver("/etc/mail/$domain");  Same but with separate file per domain
 $cfg->set_username("$localpart");
