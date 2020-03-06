@@ -330,14 +330,18 @@ abstract class RequestHandler {
      * @param stdClass $request
      */
     protected function expand_request(stdClass $request) {
-        list($localpart, $domain) = explode('@', $request->email);
+        $localpart = '';
+        $domain = '';
+        if($request->email){
+            list($localpart, $domain) = explode('@', $request->email);
+        }
 
         if (!isset($request->localpart)) {
-            $request->localpart = $localpart;
+            $request->localpart = ($localpart) ? $localpart : '';
         }
 
         if (!isset($request->domain)) {
-            $request->domain = strtolower($domain);
+            $request->domain = ($domain) ? strtolower($domain) : '';
         }
     }
 
