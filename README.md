@@ -17,7 +17,7 @@ Things this script does for you:
   This script can be especially helpful in the latter case, since it supports reading /etc/mail/aliases type files commonly found in Linux setups. You can also define your own mapping using for example a database, but this will require some additional programming.
 
 ## Requirements
-* A web server capable of running PHP scripts and URL rewriting
+* A web server capable of running PHP >= 7.3 scripts and URL rewriting
 * A **SSL certificate** for **autoconfig.yourdomain.com**, **autodiscover.yourdomain.com**, as well as any additional domains you use. The most crucial of these is autodiscover.yourdomain.com, which is used by Outlook, which will use HTTPS to obtain its settings by default. It may revert to HTTP if the user persists, but will complain loudly before doing so.
 * DNS entries for the above host names pointing to the web server
 
@@ -28,7 +28,7 @@ While pretty much any web server on any platform will do, only Apache 2 will be 
 In this example, we'll be setting things up for the example.com mail server, running Linux and Apache 2. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some of the details are glanced over here because they differ per Linux distro.
 
 1. Create a new directory that will contain the web site. In this example, we'll use `/var/www/autoconfig`
-2. Place the autoconfig.php and autoconfig.settings.sample.php in the new directory
+2. Place the code from folder `src` inside the new directory
 3. Copy or rename autoconfig.settings.sample.php to autoconfig.settings.php
 4. Create a new VirtualHost configuration in Apache:
    ```
@@ -55,6 +55,32 @@ In this example, we'll be setting things up for the example.com mail server, run
 6. Edit the autoconfig.settings.php file using your favorite text editor. See below for configuration details.
 7. Restart Apache
 
+## Setup using Nginx
+
+In this example, we'll be setting things up for the example.com mail server, running Linux and Nginx. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some of the details are glanced over here because they differ per Linux distro.
+
+1. Create a new directory that will contain the web site. In this example, we'll use `/var/www/autoconfig`
+2. Place the code from folder `src` inside the new directory
+3. Copy or rename autoconfig.settings.sample.php to autoconfig.settings.php
+4. Create a new VirtualHost configuration in Nginx:
+   ```
+    server {
+        listen 80;
+        server_name autoconfig.example.com autoconfig.example.org autodiscover.example.com autodiscover.example.org;
+        root /var/www/autoconfig;
+    
+        location ~ ^/mail/config-.*\.xml$ {
+            index autoconfig.php;
+        }
+        location ~ ^/autodiscover/autodiscover.xml$ {
+            index autoconfig.php;
+        }
+    }
+   ```
+5. Repeat the same configuration for `listen 443 ssl` and add your SSL configuration (`ssl_certificate`, `ssl_certificate_key`, etc.) Alternatively, if you use [Let's Encrypt](https://letsencrypt.org/) for your free SSL certificate, you can let the command line tool take care of this for you afterwards.
+6. Edit the autoconfig.settings.php file using your favorite text editor. See below for configuration details.
+7. Restart Apache
+
 ## Configuration
 
 The configuration file is really just a normal PHP source file that is included into the main source file.
@@ -78,16 +104,16 @@ Each of these domains have their own aliases file, `/etc/mail/domains/example.co
 <?php
 
 $cfg = $config->add('example.com');
-$cfg->name = 'Example mail services';
-$cfg->nameShort = 'Example';
-$cfg->domains = [ 'example.com', 'example.org' ];
-$cfg->username = new AliasesFileUsernameResolver("/etc/mail/domains/$domain/aliases");
+$cfg->set_name('Example mail services', 'Example');
+$cfg->set_domains([ 'example.com', 'example.org' ]);
+$aliasResolver = new AliasesFileUsernameResolver("/etc/mail/domains/$domain/aliases");
+$cfg->set_username($aliasResolver);
 
-$cfg->addServer('imap', 'mail.example.com')
+$cfg->add_server('imap', 'mail.example.com')
     ->withEndpoint('STARTTLS')
     ->withEndpoint('SSL');
 
-$cfg->addServer('smtp', 'mail.example.com')
+$cfg->add_server('smtp', 'mail.example.com')
     ->withEndpoint('STARTTLS')
     ->withEndpoint('SSL');
 ```
@@ -102,3 +128,5 @@ $cfg->addServer('smtp', 'mail.example.com')
    * If this does not work, check your SSL setup.
 3. If everything appears to work, test by adding the mail account to Thunderbird and Outlook itself.
 
+## Credits
+Original code from [Thorarin](https://github.com/Thorarin) in his [Repository](https://github.com/Thorarin/MailClientAutoConfig)
