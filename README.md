@@ -62,18 +62,20 @@ In this example, we'll be setting things up for the example.com mail server, run
 1. Create a new directory that will contain the web site. In this example, we'll use `/var/www/autoconfig`
 2. Place the code from folder `src` inside the new directory
 3. Copy or rename autoconfig.settings.sample.php to autoconfig.settings.php
-4. Create a new VirtualHost configuration in Nginx:
+4. Create a new VirtualHost configuration in Nginx:  
+(don't forget to add `[FASTCGI_CONFIG]` for your server)
    ```
     server {
         listen 80;
         server_name autoconfig.example.com autoconfig.example.org autodiscover.example.com autodiscover.example.org;
         root /var/www/autoconfig;
+        index index.php;
     
-        location ~ ^/mail/config-.*\.xml$ {
-            index autoconfig.php;
-        }
-        location ~ ^/autodiscover/autodiscover.xml$ {
-            index autoconfig.php;
+        rewrite ^/mail/config-.*\.xml$ / last;
+        rewrite ^/autodiscover/autodiscover.xml$ / last;
+   
+        location ~ \.php$ {
+            [FASTCGI_CONFIG]
         }
     }
    ```
