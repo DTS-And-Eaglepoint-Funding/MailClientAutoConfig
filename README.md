@@ -112,12 +112,12 @@ $aliasResolver = new AliasesFileUsernameResolver("/etc/mail/domains/$domain/alia
 $cfg->set_username($aliasResolver);
 
 $cfg->add_server('imap', 'mail.example.com')
-    ->withEndpoint('STARTTLS')
-    ->withEndpoint('SSL');
+    ->with_endpoint('STARTTLS')
+    ->with_endpoint('SSL');
 
 $cfg->add_server('smtp', 'mail.example.com')
-    ->withEndpoint('STARTTLS')
-    ->withEndpoint('SSL');
+    ->with_endpoint('STARTTLS')
+    ->with_endpoint('SSL');
 ```
 
 ## Testing the setup
