@@ -9,42 +9,46 @@ class OutlookHandler extends RequestHandler
      */
     protected function parse_request(): object
     {
-        $postdata = file_get_contents( "php://input" );
+        $postdata = file_get_contents("php://input");
 
-        if ( strlen( $postdata ) > 0 ) {
-            $xml = simplexml_load_string( $postdata );
+        if (strlen($postdata) > 0) {
+            $xml = simplexml_load_string($postdata);
             $emailaddress = $xml->Request->EMailAddress;
-            if ( is_null( $emailaddress ) ) {
-                throw new Exception( Exceptions::NO_MAILADDRESS_PROVIDED );
+            if (is_null($emailaddress)) {
+                throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
             }
-            return (object) [ 'email' => $emailaddress ];
+            return (object)['email' => $emailaddress];
         }
 
-        throw new Exception( Exceptions::NO_MAILADDRESS_PROVIDED );
+        throw new Exception(Exceptions::NO_MAILADDRESS_PROVIDED);
     }
 
     /**
-     * @param XMLWriter           $writer
+     * @param XMLWriter $writer
      * @param DomainConfiguration $config
-     * @param stdClass            $request
+     * @param stdClass $request
      */
-    public function write_xml( XMLWriter $writer, DomainConfiguration $config, stdClass $request )
+    public function write_xml(XMLWriter $writer, DomainConfiguration $config, stdClass $request)
     {
-        $writer->startDocument( "1.0", "utf-8" );
-        $writer->setIndent( 4 );
-        $writer->startElement( "Autodiscover" );
-        $writer->writeAttribute( "xmlns", "http://schemas.microsoft.com/exchange/autodiscover/responseschema/2006" );
-        $writer->startElement( "Response" );
-        $writer->writeAttribute( "xmlns", "http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a" );
+        $writer->startDocument("1.0", "utf-8");
+        $writer->setIndent(4);
+        $writer->startElement("Autodiscover");
+        $writer->writeAttribute("xmlns", "http://schemas.microsoft.com/exchange/autodiscover/responseschema/2006");
+        $writer->startElement("Response");
+        $writer->writeAttribute(
+            "xmlns",
+            "http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a"
+        );
 
-        $writer->startElement( "Account" );
-        $writer->writeElement( "AccountType", "email" );
-        $writer->writeElement( "Action", "settings" );
+        $writer->startElement("Account");
+        $writer->writeElement("AccountType", "email");
+        $writer->writeElement("Action", "settings");
 
-        foreach ( $config->get_servers() as $server ) {
-            foreach ( $server->endpoints as $endpoint ) {
-                if ( $this->write_protocol( $writer, $server, $endpoint, $request ) )
+        foreach ($config->get_servers() as $server) {
+            foreach ($server->endpoints as $endpoint) {
+                if ($this->write_protocol($writer, $server, $endpoint, $request)) {
                     break;
+                }
             }
         }
 
@@ -57,52 +61,54 @@ class OutlookHandler extends RequestHandler
 
     /**
      * @param XMLWriter $writer
-     * @param Server    $server
-     * @param stdClass  $endpoint
-     * @param stdClass  $request
+     * @param Server $server
+     * @param stdClass $endpoint
+     * @param stdClass $request
      *
      * @return bool
      */
-    protected function write_protocol( XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request )
+    protected function write_protocol(XMLWriter $writer, Server $server, stdClass $endpoint, stdClass $request)
     {
-        switch ( $endpoint->authentication ) {
+        switch ($endpoint->authentication) {
             case 'password-cleartext':
             case 'SPA':
                 break;
             case 'none':
-                if ( $server->type !== 'smtp' ) return false;
+                if ($server->type !== 'smtp') {
+                    return false;
+                }
                 break;
             default:
                 return false;
         }
 
-        $writer->startElement( 'Protocol' );
-        $writer->writeElement( 'Type', strtoupper( $server->type ) );
-        $writer->writeElement( 'Server', $server->hostname );
-        $writer->writeElement( 'Port', $endpoint->port );
-        $writer->writeElement( 'LoginName', $this->get_username( $server, $request ) );
-        $writer->writeElement( 'DomainRequired', 'off' );
-        $writer->writeElement( 'SPA', $endpoint->authentication === 'SPA' ? 'on' : 'off' );
+        $writer->startElement('Protocol');
+        $writer->writeElement('Type', strtoupper($server->type));
+        $writer->writeElement('Server', $server->hostname);
+        $writer->writeElement('Port', $endpoint->port);
+        $writer->writeElement('LoginName', $this->get_username($server, $request));
+        $writer->writeElement('DomainRequired', 'off');
+        $writer->writeElement('SPA', $endpoint->authentication === 'SPA' ? 'on' : 'off');
 
-        switch ( $endpoint->socket_type ) {
+        switch ($endpoint->socket_type) {
             case 'plain':
-                $writer->writeElement( "SSL", "off" );
+                $writer->writeElement("SSL", "off");
                 break;
             case 'SSL':
-                $writer->writeElement( "SSL", "on" );
-                $writer->writeElement( "Encryption", "SSL" );
+                $writer->writeElement("SSL", "on");
+                $writer->writeElement("Encryption", "SSL");
                 break;
             case 'STARTTLS':
-                $writer->writeElement( "SSL", "on" );
-                $writer->writeElement( "Encryption", "TLS" );
+                $writer->writeElement("SSL", "on");
+                $writer->writeElement("Encryption", "TLS");
                 break;
         }
 
-        $writer->writeElement( "AuthRequired", $endpoint->authentication !== 'none' ? 'on' : 'off' );
+        $writer->writeElement("AuthRequired", $endpoint->authentication !== 'none' ? 'on' : 'off');
 
-        if ( $server->type == 'smtp' ) {
-            $writer->writeElement( 'UsePOPAuth', $server->same_password ? 'on' : 'off' );
-            $writer->writeElement( 'SMTPLast', 'off' );
+        if ($server->type == 'smtp') {
+            $writer->writeElement('UsePOPAuth', $server->same_password ? 'on' : 'off');
+            $writer->writeElement('SMTPLast', 'off');
         }
 
         $writer->endElement();
@@ -115,9 +121,9 @@ class OutlookHandler extends RequestHandler
      *
      * @return bool|false|string|null
      */
-    protected function map_authentication_type( string $authentication )
+    protected function map_authentication_type(string $authentication)
     {
-        switch ( $authentication ) {
+        switch ($authentication) {
             case 'password-cleartext':
                 return 'password-cleartext';
             case 'CRAM-MD5':

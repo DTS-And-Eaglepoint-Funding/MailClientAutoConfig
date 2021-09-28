@@ -1,7 +1,8 @@
 <?php
 
 
-class ExceptionHandling {
+class ExceptionHandling
+{
     private $status_code;
     private $exception_message;
     private $respose_type;
@@ -12,7 +13,11 @@ class ExceptionHandling {
      * @param string $exception_message
      * @param string $respose_type
      */
-    public function __construct(int $status_code = 400, string $exception_message = 'Bad Request', string $respose_type = 'xml') {
+    public function __construct(
+        int $status_code = 400,
+        string $exception_message = 'Bad Request',
+        string $respose_type = 'xml'
+    ) {
         $this->status_code = $status_code;
         $this->exception_message = $exception_message;
         $this->respose_type = $respose_type;
@@ -22,7 +27,8 @@ class ExceptionHandling {
      * @param int $status
      * @return ExceptionHandling
      */
-    public function set_status(int $status) {
+    public function set_status(int $status)
+    {
         $this->status_code = $status;
         return $this;
     }
@@ -31,7 +37,8 @@ class ExceptionHandling {
      * @param string $message
      * @return ExceptionHandling
      */
-    public function set_exception(string $message) {
+    public function set_exception(string $message)
+    {
         $this->exception_message = $message;
         return $this;
     }
@@ -41,7 +48,8 @@ class ExceptionHandling {
      * @return ExceptionHandling
      * @throws Exception
      */
-    public function set_respose_type(string $response_type) {
+    public function set_respose_type(string $response_type)
+    {
         $possible_response_types = array('xml', 'text', 'html');
         if (!in_array($response_type, $possible_response_types)) {
             throw new Exception("Selected response_type not available '$response_type'");
@@ -53,7 +61,8 @@ class ExceptionHandling {
     /**
      * @return string
      */
-    public function get_response() {
+    public function get_response()
+    {
         switch ($this->respose_type) {
             case 'html':
                 return $this->response_html();
@@ -68,7 +77,8 @@ class ExceptionHandling {
     /**
      * @return string
      */
-    private function response_xml() {
+    private function response_xml()
+    {
         header("Content-Type: application/xml; charset=UTF-8");
         http_response_code($this->status_code);
         $writer = new XMLWriter();
@@ -82,7 +92,8 @@ class ExceptionHandling {
     /**
      * @return string
      */
-    private function response_text() {
+    private function response_text()
+    {
         header("Content-Type: text/plain; charset=UTF-8");
         http_response_code($this->status_code);
         return $this->exception_message;
@@ -91,7 +102,8 @@ class ExceptionHandling {
     /**
      * @return string
      */
-    private function response_html() {
+    private function response_html()
+    {
         header("Content-Type: text/html; charset=UTF-8");
         http_response_code($this->status_code);
         return "<html lang=\"en\"><head><title>{$this->status_code}</title></head><body>{$this->exception_message}</body></html>";

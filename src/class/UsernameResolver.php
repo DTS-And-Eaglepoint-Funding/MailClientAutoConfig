@@ -7,5 +7,5 @@ interface UsernameResolver
      *
      * @return string|null
      */
-    public function find_username( stdClass $request );
+    public function find_username(stdClass $request);
 }

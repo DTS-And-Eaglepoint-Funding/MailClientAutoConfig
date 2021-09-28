@@ -18,24 +18,24 @@ class DomainConfiguration
      * @return Server
      * @throws Exception
      */
-    public function add_server( string $type, string $hostname )
+    public function add_server(string $type, string $hostname)
     {
-        $server           = $this->create_server( $type, $hostname );
+        $server = $this->create_server($type, $hostname);
         $server->username = $this->username;
-        array_push( $this->servers, $server );
+        array_push($this->servers, $server);
         return $server;
     }
 
     /**
      * Set Name for Config
      *
-     * @param string      $name
+     * @param string $name
      * @param string|null $name_short
      */
-    public function set_name( string $name, string $name_short = null )
+    public function set_name(string $name, string $name_short = null)
     {
         $this->name = $name;
-        if ( !is_null( $name_short ) ) {
+        if (!is_null($name_short)) {
             $this->name_short = $name_short;
         }
     }
@@ -63,7 +63,7 @@ class DomainConfiguration
      *
      * @param string $id
      */
-    public function set_id( string $id )
+    public function set_id(string $id)
     {
         $this->id = $id;
     }
@@ -82,7 +82,7 @@ class DomainConfiguration
      *
      * @param array $domains
      */
-    public function set_domains( array $domains )
+    public function set_domains(array $domains)
     {
         $this->domains = $domains;
     }
@@ -101,7 +101,7 @@ class DomainConfiguration
      *
      * @param string $username
      */
-    public function set_username( string $username )
+    public function set_username(string $username)
     {
         $this->username = $username;
     }
@@ -122,17 +122,17 @@ class DomainConfiguration
      * @return Server
      * @throws Exception
      */
-    private function create_server( string $type, string $hostname )
+    private function create_server(string $type, string $hostname)
     {
-        switch ( $type ) {
+        switch ($type) {
             case ConnectionType::IMAP:
-                return new Server( $type, $hostname, 143, 993 );
+                return new Server($type, $hostname, 143, 993);
             case ConnectionType::POP3:
-                return new Server( $type, $hostname, 110, 995 );
+                return new Server($type, $hostname, 110, 995);
             case ConnectionType::SMTP:
-                return new Server( $type, $hostname, 25, 465 );
+                return new Server($type, $hostname, 25, 465);
             default:
-                throw new Exception( sprintf( Exceptions::UNKNOWN_SOCKET_TYPE, $type ) );
+                throw new Exception(sprintf(Exceptions::UNKNOWN_SOCKET_TYPE, $type));
         }
     }
 }
