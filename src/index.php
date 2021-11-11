@@ -2,7 +2,8 @@
 
 include './autoconfig.php';
 include './class/ExceptionHandling.php';
-
+/** @var MozillaHandler|OutlookHandler|null $handler */
+$handler = null;
 if (strpos($_SERVER['SERVER_NAME'], "autoconfig.") === 0) {
     // Configuration for Mozilla Thunderbird, Evolution, KMail, Kontact
     $handler = new MozillaHandler();

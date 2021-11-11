@@ -35,7 +35,7 @@ class Server
      *
      * @return $this
      */
-    public function with_username(string $username)
+    public function with_username(string $username): self
     {
         $this->username = $username;
         return $this;
@@ -60,20 +60,17 @@ class Server
      *
      * @return $this
      */
-    public function with_endpoint(string $socket_type, $port = null, $authentication = 'password-cleartext')
+    public function with_endpoint(string $socket_type, $port = null, $authentication = 'password-cleartext'): self
     {
         if ($port === null) {
             $port = $socket_type === SocketType::SSL ? $this->default_ssl_port : $this->default_port;
         }
 
-        array_push(
-            $this->endpoints,
-            (object)[
-                'socketType' => $socket_type,
-                'port' => $port,
-                'authentication' => $authentication,
-            ]
-        );
+        $this->endpoints[] = (object)[
+            'socketType' => $socket_type,
+            'port' => $port,
+            'authentication' => $authentication,
+        ];
 
         return $this;
     }

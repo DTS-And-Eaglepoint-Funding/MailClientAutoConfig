@@ -134,7 +134,7 @@ class MozillaHandler extends RequestHandler
     /**
      * @param string $authentication
      *
-     * @return false|string|null
+     * @return string|null
      */
     protected function map_authentication_type(string $authentication)
     {

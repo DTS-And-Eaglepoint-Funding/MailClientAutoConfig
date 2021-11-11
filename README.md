@@ -1,5 +1,5 @@
 # MailClientAutoConfig
-PHP script to help serve Outlook [autodiscover.xml](https://msdn.microsoft.com/en-us/library/cc463896%28v=exchg.80%29.aspx) as well as Mozilla [autoconfig](https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration) files.
+PHP scripts to help serve Outlook [autodiscover.xml](https://msdn.microsoft.com/en-us/library/cc463896%28v=exchg.80%29.aspx) as well as Mozilla [autoconfig](https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration) files.
 
 Instead of making your users manually configure their email clients, you can publish the necessary settings on a web server. Several popular mail clients support this feature and will automatically configure based on an email address and a password. 
 
@@ -25,9 +25,9 @@ While pretty much any web server on any platform will do, only Apache 2 will be 
 
 ## Setup using Apache 2
 
-In this example, we'll be setting things up for the example.com mail server, running Linux and Apache 2. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some of the details are glanced over here because they differ per Linux distro.
+In this example, we'll be setting things up for the example.com mail server, running Linux and Apache 2. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some details are glanced over here because they differ per Linux distro.
 
-1. Create a new directory that will contain the web site. In this example, we'll use `/var/www/autoconfig`
+1. Create a new directory that will contain the website. In this example, we'll use `/var/www/autoconfig`
 2. Place the code from folder `src` inside the new directory
 3. Copy or rename autoconfig.settings.sample.php to autoconfig.settings.php
 4. Create a new VirtualHost configuration in Apache:
@@ -57,9 +57,9 @@ In this example, we'll be setting things up for the example.com mail server, run
 
 ## Setup using Nginx
 
-In this example, we'll be setting things up for the example.com mail server, running Linux and Nginx. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some of the details are glanced over here because they differ per Linux distro.
+In this example, we'll be setting things up for the example.com mail server, running Linux and Nginx. The organization also uses a number of mail addresses on example.org, hosted on the same mail server. Some details are glanced over here because they differ per Linux distro.
 
-1. Create a new directory that will contain the web site. In this example, we'll use `/var/www/autoconfig`
+1. Create a new directory that will contain the website. In this example, we'll use `/var/www/autoconfig`
 2. Place the code from folder `src` inside the new directory
 3. Copy or rename autoconfig.settings.sample.php to autoconfig.settings.php
 4. Create a new VirtualHost configuration in Nginx:  
@@ -89,7 +89,7 @@ The configuration file is really just a normal PHP source file that is included 
 This means that there is nothing stopping you from adding custom code here, or from messing things up badly ;-)
 
 Most of the configuration is explained inside the sample configuration file itself, but there are a few things to note:
-* In the configuration file, you typically define at least two servers: one IMAP or POP3 server, and a SMTP server.
+* In the configuration file, you typically define at least two servers: one IMAP or POP3 server, and an SMTP server.
 * Each server can have one or more endpoints. An endpoint is a combination of:
   * The TCP port number
   * The transport security (unencrypted, TLS or SSL)
@@ -131,4 +131,6 @@ $cfg->add_server('smtp', 'mail.example.com')
 3. If everything appears to work, test by adding the mail account to Thunderbird and Outlook itself.
 
 ## Credits
-Original code from [Thorarin](https://github.com/Thorarin) in his [Repository](https://github.com/Thorarin/MailClientAutoConfig)
+All code is derived from 
+- [Thorarin](https://github.com/Thorarin) - [Repository](https://github.com/Thorarin/MailClientAutoConfig)
+- [Thokas](https://github.com/Thokas) - [Repository](https://github.com/Thorarin/MailClientAutoConfig)

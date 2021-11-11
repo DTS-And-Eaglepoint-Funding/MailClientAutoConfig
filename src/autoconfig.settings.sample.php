@@ -9,7 +9,7 @@
 //
 // The following variables are available throughout the file:
 // $email       Full email address the settings are requested for
-// $domain      The domain part of the email address 
+// $domain      The domain part of the email address
 // $localpart   The part before the @ sign of the email address
 
 // Add a new configuration set for a new group of domains. The argument
@@ -45,16 +45,16 @@ $cfg->set_username("$localpart");
 // $port             The port number on which the server will listen. Omit to use defaults.
 // $authentication   The authentication scheme to use:
 //                   password-cleartext     Default. Should be used only with STARTTLS or SSL
-//                   CRAM-MD5               Not supported by Outlook  
+//                   CRAM-MD5               Not supported by Outlook
 //                   SPA                    Not supported by Thunderbird
-//                   none                   Only valid for SMTP. Not recommended however.
+//                   none                   Only valid for SMTP. Not recommended, however.
 
 // Example IMAP server for incoming mail, running on port 143 (TLS) and 993 (SSL)
 $cfg->add_server('imap', 'imap.example.com')
     ->with_endpoint('STARTTLS')
     ->with_endpoint('SSL');
 
-// Example POP3 server for incoming mail, running on port 110 (TLS) and 995 (SSL)    
+// Example POP3 server for incoming mail, running on port 110 (TLS) and 995 (SSL)
 $cfg->add_server('pop3', 'pop.example.com')
     ->with_endpoint('STARTTLS')
     ->with_endpoint('SSL');
