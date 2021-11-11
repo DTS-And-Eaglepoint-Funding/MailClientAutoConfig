@@ -90,18 +90,20 @@ class OutlookHandler extends RequestHandler
         $writer->writeElement('DomainRequired', 'off');
         $writer->writeElement('SPA', $endpoint->authentication === 'SPA' ? 'on' : 'off');
 
-        switch ($endpoint->socket_type) {
-            case 'plain':
-                $writer->writeElement("SSL", "off");
-                break;
-            case 'SSL':
-                $writer->writeElement("SSL", "on");
-                $writer->writeElement("Encryption", "SSL");
-                break;
-            case 'STARTTLS':
-                $writer->writeElement("SSL", "on");
-                $writer->writeElement("Encryption", "TLS");
-                break;
+        if (property_exists($endpoint, 'socket_type')) {
+            switch ($endpoint->socket_type) {
+                case 'plain':
+                    $writer->writeElement("SSL", "off");
+                    break;
+                case 'SSL':
+                    $writer->writeElement("SSL", "on");
+                    $writer->writeElement("Encryption", "SSL");
+                    break;
+                case 'STARTTLS':
+                    $writer->writeElement("SSL", "on");
+                    $writer->writeElement("Encryption", "TLS");
+                    break;
+            }
         }
 
         $writer->writeElement("AuthRequired", $endpoint->authentication !== 'none' ? 'on' : 'off');
