@@ -8,4 +8,6 @@ class Exceptions
     const LOCALPART_NOT_PARSEABLE = "Unable to parse \$localPart";
     const NO_MAILADDRESS_PROVIDED = 'No emailaddress provided';
     const INVALID_HOSTNAME_CALLED = 'Invalid hostname called "%s"';
+    const UNKNOWN_CONNECTION_TYPE = 'Unknown connection type "%s"';
+    const OVERLAPPING_DOMAINS = "Overlapping domains '%s' found in configurations.";
 }

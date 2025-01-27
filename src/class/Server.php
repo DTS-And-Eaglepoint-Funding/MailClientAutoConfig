@@ -9,6 +9,12 @@ class Server
     public $same_password;
     public $default_port;
     public $default_ssl_port;
+    public $domainRequired;
+    public $client_settings = [];
+    public $method = 'config';
+    private ?string $mta_sts_mode = null;
+    private ?int $mta_sts_max_age = null;
+    private $mta_sts_mx_records = [];
 
     /**
      * Server constructor.
@@ -18,7 +24,7 @@ class Server
      * @param int $default_port
      * @param int $default_ssl_port
      */
-    public function __construct(string $type, string $hostname, int $default_port, int $default_ssl_port)
+    public function __construct(string $type, string $hostname, int $default_port, int $default_ssl_port, bool $domainRequired)
     {
         $this->type = $type;
         $this->hostname = $hostname;
@@ -26,6 +32,7 @@ class Server
         $this->default_ssl_port = $default_ssl_port;
         $this->endpoints = [];
         $this->same_password = true;
+        $this->domainRequired = $domainRequired;
     }
 
     /**
@@ -50,7 +57,109 @@ class Server
         $this->same_password = false;
         return $this;
     }
+    public function add_client_settings(array $settings)
+    {
+        $this->client_settings = $settings;
+        return $this;
+    }
 
+    public function get_client_settings()
+    {
+        return $this->client_settings;
+    }
+
+    /**
+     * Sets the method used to obtain server configuration.
+     *
+     * @param string $method The method used (e.g., 'txt', 'srv', 'mx', 'ispdb').
+     * @return $this
+     */
+    public function setMethod(string $method): self
+    {
+        $this->method = $method;
+        return $this;
+    }
+
+    /**
+     * Gets the method used to obtain server configuration.
+     *
+     * @return string The method used.
+     */
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+    /**
+     * @return string|null
+     */
+    public function get_mta_sts_mode(): ?string
+    {
+        if ($this->type !== 'mta-sts') {
+            return null;
+        }
+        return $this->mta_sts_mode;
+    }
+
+    /**
+     * @param string $mode
+     * @return void
+     */
+    public function set_mta_sts_mode(string $mode): self
+    {
+        if ($this->type !== 'mta-sts') {
+            return $this;
+        }
+        $this->mta_sts_mode = $mode;
+        return $this;
+    }
+
+        /**
+     * @return int|null
+     */
+    public function get_mta_sts_max_age(): ?int
+    {
+        if ($this->type !== 'mta-sts') {
+            return null;
+        }
+        return $this->mta_sts_max_age;
+    }
+
+    /**
+     * @param int $max_age
+     * @return void
+     */
+    public function set_mta_sts_max_age(?int $max_age): self
+    {
+        if ($this->type !== 'mta-sts') {
+            return $this;
+        }
+        $this->mta_sts_max_age = $max_age;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_mta_sts_mx_records(): array
+    {
+        if ($this->type !== 'mta-sts') {
+            return null;
+        }
+        return $this->mta_sts_mx_records;
+    }
+
+    /**
+     * @param array $mta_sts_mx_records
+     * @return void
+     */
+    public function set_mta_sts_mx_records(array $mta_sts_mx_records): self
+    {
+        if ($this->type !== 'mta-sts') {
+            return $this;
+        }
+        $this->mta_sts_mx_records = $mta_sts_mx_records;
+        return $this;
+    }
     /**
      * Set Endpoint for Server, can be called multiple times to set different endpoints
      *

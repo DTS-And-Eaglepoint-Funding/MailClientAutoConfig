@@ -1,3 +1,4 @@
 /src/autoconfig.settings.php
+/src/class/mail_config_cache/*.cache
 .idea
 .vscode
