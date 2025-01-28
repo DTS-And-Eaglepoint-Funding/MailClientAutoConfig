@@ -15,8 +15,11 @@ $handler = null;
 
 // Check URL path for service type
 $path = strtolower($_SERVER['REQUEST_URI']);
-
 if (
+    strpos($path, "/srv") !== false
+) {
+    $handler = new SRVRecordHandler();
+}else if (
     strpos($_SERVER['SERVER_NAME'], "autoconfig.") === 0 ||
     strpos($path, "/mail/config-v1.1.xml") !== false ||
     strpos($path, "/autoconfig") !== false
@@ -37,12 +40,7 @@ if (
 ) {
     // Configuration for MTA-STS
     $handler = new MTASTSHandler();
-} else if (
-    strpos($path, "/srv") !== false
-) {
-    // Configuration for MTA-STS
-    $handler = new SRVRecordHandler();
-}
+} 
 
 
 $exception_handler = new ExceptionHandling();
