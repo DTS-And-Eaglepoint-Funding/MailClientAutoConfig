@@ -1,8 +1,12 @@
 # Enable rewrite engine
+
 RewriteEngine On
 
-# Redirect requests for mail config XML files to index.php (case-insensitive)
-RewriteRule ^mail/config-.*\.xml$ /index.php [L,NC]
+# Check if the requested path is not a file or a directory
 
-# Redirect requests for autodiscover XML files to index.php (case-insensitive)
-RewriteRule ^autodiscover/autodiscover.xml$ /index.php [L,NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirect everything else to index.php
+
+RewriteRule ^ index.php [L,NC]

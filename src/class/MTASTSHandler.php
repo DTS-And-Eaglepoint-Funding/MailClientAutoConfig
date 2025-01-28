@@ -163,6 +163,9 @@ class MTASTSHandler extends RequestHandler
         $records = get_dns_record($domain, DNS_MX);
         $mxHosts = [];
         if ($records) {
+            usort($records, function ($a, $b) {
+                return $a['pri'] <=> $b['pri'];
+            });
             foreach ($records as $record) {
                 $mxHosts[] = $record['target'];
             }
